@@ -1,20 +1,28 @@
 {
   "name": "@withvlibe/storage-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vlibe Storage SDK - File storage for Vlibe apps",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/withvlibe/storage-sdk.git"
+  },
+  "homepage": "https://github.com/withvlibe/storage-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/withvlibe/storage-sdk/issues"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./react": {
+      "types": "./dist/react.d.ts",
       "import": "./dist/react.mjs",
-      "require": "./dist/react.js",
-      "types": "./dist/react.d.ts"
+      "require": "./dist/react.js"
     }
   },
   "files": [

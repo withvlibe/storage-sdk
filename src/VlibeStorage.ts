@@ -12,6 +12,11 @@ import type {
   CanUploadResult,
   PresignedUpload,
   ApiResponse,
+  Folder,
+  CreateFolderOptions,
+  ListFoldersOptions,
+  FileReference,
+  FileCopyResult,
 } from './types';
 
 const DEFAULT_BASE_URL = 'https://vlibe.app';
@@ -366,6 +371,136 @@ export class VlibeStorage {
 
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to check upload');
+    }
+
+    return response.data;
+  }
+
+  // ============================================
+  // FOLDER MANAGEMENT
+  // ============================================
+
+  /**
+   * List folders
+   */
+  async listFolders(options: ListFoldersOptions = {}): Promise<Folder[]> {
+    const params = new URLSearchParams();
+    if (options.parentId !== undefined) {
+      params.set('parentId', options.parentId === null ? 'null' : options.parentId);
+    }
+    if (options.projectId) {
+      params.set('projectId', options.projectId);
+    }
+
+    const response = await this.request<Folder[]>(`/storage/folders?${params}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to list folders');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Create a folder
+   */
+  async createFolder(name: string, options: CreateFolderOptions = {}): Promise<Folder> {
+    const response = await this.request<Folder>('/storage/folders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        parentId: options.parentId,
+        projectId: options.projectId,
+        isProjectRoot: options.isProjectRoot,
+      }),
+    });
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to create folder');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Rename a folder
+   */
+  async renameFolder(folderId: string, name: string): Promise<Folder> {
+    const response = await this.request<Folder>(`/storage/folders/${folderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
+    });
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to rename folder');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Delete a folder (must be empty)
+   */
+  async deleteFolder(folderId: string): Promise<boolean> {
+    const response = await this.request<void>(`/storage/folders/${folderId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.success) {
+      if (response.error?.includes('not found')) {
+        return false;
+      }
+      throw new Error(response.error || 'Failed to delete folder');
+    }
+
+    return true;
+  }
+
+  // ============================================
+  // FILE COPY & REFERENCE
+  // ============================================
+
+  /**
+   * Copy a file to another project
+   * Creates a new database record pointing to the same S3 object
+   */
+  async copyFileToProject(fileId: string, targetProjectId: string): Promise<FileCopyResult> {
+    const response = await this.request<FileCopyResult>('/storage/files/copy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fileId, targetProjectId }),
+    });
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to copy file');
+    }
+
+    return response.data;
+  }
+
+  /**
+   * Create a file reference (link file to another project without copying)
+   * Does not count against storage quota
+   */
+  async createFileReference(fileId: string, targetProjectId: string): Promise<FileReference> {
+    const response = await this.request<FileReference>('/storage/files/reference', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fileId, targetProjectId }),
+    });
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Failed to create file reference');
     }
 
     return response.data;

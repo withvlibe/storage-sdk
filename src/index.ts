@@ -17,4 +17,9 @@ export type {
   StorageStats,
   CanUploadResult,
   PresignedUpload,
+  Folder,
+  CreateFolderOptions,
+  ListFoldersOptions,
+  FileReference,
+  FileCopyResult,
 } from './types';

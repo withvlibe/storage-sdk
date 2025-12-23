@@ -93,3 +93,50 @@ export interface ApiResponse<T> {
   error?: string;
   message?: string;
 }
+
+// ============================================
+// FOLDER TYPES
+// ============================================
+
+export interface Folder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  projectId: string | null;
+  isProjectRoot: boolean;
+  fileCount: number;
+  createdAt: string;
+}
+
+export interface CreateFolderOptions {
+  /** Parent folder ID (null for root level) */
+  parentId?: string;
+  /** Associate folder with a project */
+  projectId?: string;
+  /** Mark as project root folder */
+  isProjectRoot?: boolean;
+}
+
+export interface ListFoldersOptions {
+  /** Filter by parent folder ID (null for root level) */
+  parentId?: string | null;
+  /** Filter by project ID */
+  projectId?: string;
+}
+
+export interface FileReference {
+  id: string;
+  sourceFileId: string;
+  targetProjectId: string;
+  createdAt: string;
+}
+
+export interface FileCopyResult {
+  id: string;
+  key: string;
+  filename: string;
+  size: number;
+  mimeType: string;
+  url: string;
+  isPublic: boolean;
+}
