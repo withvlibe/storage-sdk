@@ -1,6 +1,6 @@
 {
   "name": "@withvlibe/storage-sdk",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Vlibe Storage SDK - File storage for Vlibe apps",
   "repository": {
     "type": "git",

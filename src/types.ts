@@ -140,3 +140,14 @@ export interface FileCopyResult {
   url: string;
   isPublic: boolean;
 }
+
+// ============================================
+// STORAGE CONFIG TYPES
+// ============================================
+
+export type StorageProviderType = 'r2' | 'wasabi';
+
+export interface StorageConfig {
+  provider: StorageProviderType;
+  publicUrlBase: string;
+}

@@ -22,4 +22,6 @@ export type {
   ListFoldersOptions,
   FileReference,
   FileCopyResult,
+  StorageConfig,
+  StorageProviderType,
 } from './types';

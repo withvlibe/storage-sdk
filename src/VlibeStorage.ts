@@ -17,6 +17,7 @@ import type {
   ListFoldersOptions,
   FileReference,
   FileCopyResult,
+  StorageConfig,
 } from './types';
 
 const DEFAULT_BASE_URL = 'https://vlibe.app';
@@ -26,6 +27,7 @@ export class VlibeStorage {
   private appSecret: string;
   private baseUrl: string;
   private authToken: string | null = null;
+  private storageConfig: StorageConfig | null = null;
 
   constructor(config: VlibeStorageConfig) {
     this.appId = config.appId;
@@ -45,6 +47,40 @@ export class VlibeStorage {
    */
   clearAuthToken(): void {
     this.authToken = null;
+  }
+
+  /**
+   * Get storage configuration from the server
+   * This fetches the current storage provider and public URL base
+   */
+  async getStorageConfig(): Promise<StorageConfig> {
+    // Return cached config if available
+    if (this.storageConfig) {
+      return this.storageConfig;
+    }
+
+    try {
+      const response = await this.request<StorageConfig>('/storage/config');
+      if (response.success && response.data) {
+        this.storageConfig = response.data;
+        return response.data;
+      }
+    } catch {
+      // Fall through to default
+    }
+
+    // Fallback to legacy Wasabi configuration
+    return {
+      provider: 'wasabi',
+      publicUrlBase: 'https://s3.eu-central-2.wasabisys.com/vlibe.com',
+    };
+  }
+
+  /**
+   * Clear cached storage config (call if config might have changed)
+   */
+  clearStorageConfigCache(): void {
+    this.storageConfig = null;
   }
 
   /**
@@ -240,12 +276,41 @@ export class VlibeStorage {
   }
 
   /**
-   * Get a public URL for a file (only works for public files)
+   * Get a public URL for a file (only works for public files in the public path)
+   * Returns the direct URL based on the configured storage provider
+   *
+   * Note: This is a sync method that uses cached config. Call getStorageConfig()
+   * first to ensure the config is loaded, or use getPublicUrlAsync() for a
+   * guaranteed fresh URL.
    */
   getPublicUrl(key: string): string {
-    // This returns the direct S3 URL
-    // In practice, you might want to use a CDN URL
-    return `${this.baseUrl}/api/storage/public/${encodeURIComponent(key)}`;
+    // Use cached config if available
+    if (this.storageConfig) {
+      const base = this.storageConfig.publicUrlBase.replace(/\/$/, '');
+      return `${base}/${key}`;
+    }
+
+    // Fallback to legacy Wasabi URL
+    const region = 'eu-central-2';
+    const bucket = 'vlibe.com';
+    return `https://s3.${region}.wasabisys.com/${bucket}/${key}`;
+  }
+
+  /**
+   * Get a public URL for a file (async version that ensures fresh config)
+   * Returns the direct URL based on the configured storage provider
+   */
+  async getPublicUrlAsync(key: string): Promise<string> {
+    const config = await this.getStorageConfig();
+    const base = config.publicUrlBase.replace(/\/$/, '');
+    return `${base}/${key}`;
+  }
+
+  /**
+   * Check if a storage key is in the public path
+   */
+  isPublicKey(key: string): boolean {
+    return key.startsWith('vlibe-storage/public/');
   }
 
   // ============================================
